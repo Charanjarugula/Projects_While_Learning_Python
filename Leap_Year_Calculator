@@ -1,0 +1,10 @@
+X = float (input ("What year is it: "))
+
+if X % 4 == 0:
+    print("It's a leap year! ")
+elif X % 100 == 0 and X % 400 == 0:
+    print ("It's a leap year! ")
+elif X % 400 == 0:
+    print ("It's a leap year! ")
+else:
+    print ("It's not a leap year! ")
