@@ -1,0 +1,8 @@
+Weight = float(input("Weight: "))
+Metric = (input("(K)g or (L)bs: "))
+if Metric.upper() == "K":
+    print(Weight * 2.20462)
+elif Metric == "L":
+    print(Weight * 0.453592)
+else:
+    print('Please either input an "L" or "k"')
