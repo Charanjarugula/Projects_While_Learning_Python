@@ -1,0 +1,242 @@
+Class_List = []
+
+def Add_Category(Class):
+    total_weight = sum([cat['weight'] for cat in Class.get("categories", [])])
+    while total_weight < 100:
+        category_name = input("Enter the Name of the Category: ")
+        print("__________________")
+        category_weight = float(
+            input("Enter the Weight of Category (Remaining weight is {}%): ".format(100 - total_weight)))
+        print("__________________")
+        if category_weight + total_weight > 100:
+            print("Error: Total weight exceeds 100%. Please enter a smaller value.")
+            print("__________________")
+        else:
+            category = {"name": category_name, "weight": category_weight,
+                        "assignments": []}
+            Class.setdefault("categories", []).append(category)
+            total_weight += category_weight
+        cont = input("Do you want to add another category? (y/n): ").lower()
+        print("__________________")
+        if cont != 'y':
+            break
+    print("Review Details:")
+    for idx, category in enumerate(Class['categories'], 1):
+        print(f"{idx}. Name: {category['name']}")
+        print(f"   Weight: {category['weight']}%")
+        print("__________________")
+
+    edit_choice = input("Would you like to edit a category? Type the category number to edit or 'q' to quit: ")
+    print("__________________")
+    if edit_choice.lower() == 'q':
+        print("Exiting the edit menu.")
+    elif edit_choice.isdigit() and 1 <= int(edit_choice) <= len(Class['categories']):
+        Alter_Category(Class, int(edit_choice) - 1)
+    else:
+        print("Invalid input. Please type a valid category number or 'q' to quit.")
+
+
+def Edit_Grades(Class):
+    category_list = Class.get("categories", [])
+    if not category_list:
+        print("No categories found for this class. Please add categories first.")
+        return
+
+    print("Categories:")
+    for idx, category in enumerate(category_list, 1):
+        print(f"{idx}. {category['name']} (Weight: {category['weight']}%)")
+        if category['assignments']:
+            for ass_idx, assignment in enumerate(category['assignments'], 1):
+                print(
+                    f"   {ass_idx}. {assignment['name']} - Grade: {assignment['grade']} - Points: {assignment['points']}")
+        else:
+            print("   No assignments in this category.")
+        print("__________________")
+
+    category_choice = int(input("Which category would you like to edit (enter number): ")) - 1
+    selected_category = category_list[category_choice]
+
+    if not selected_category['assignments']:
+        print("No assignments found in this category to edit.")
+        return
+
+    print(f"Editing grades for {selected_category['name']}:")
+    for idx, assignment in enumerate(selected_category['assignments'], 1):
+        print(f"{idx}. {assignment['name']} - Grade: {assignment['grade']} - Points: {assignment['points']}")
+
+    assignment_choice = int(input("Which assignment would you like to edit (enter number): ")) - 1
+    selected_assignment = selected_category['assignments'][assignment_choice]
+
+    print("1 Rename" )
+    print("2 Change Grade" )
+    print("3 Change Points" )
+    print("4 Delete Assignment" )
+    action = input(
+        "What would you like to do? (1-4)")
+    if action == "1":
+        new_name = input("Enter the new assignment name: ")
+        print("__________________")
+        selected_assignment['name'] = new_name
+    elif action == "2":
+        new_grade = float(input("Enter the new grade: "))
+        print("__________________")
+        selected_assignment['grade'] = new_grade
+    elif action == "3":
+        new_points = float(input("Enter the new points: "))
+        print("__________________")
+        selected_assignment['points'] = new_points
+    elif action == "4":
+        selected_category['assignments'].pop(assignment_choice)
+        print("__________________")
+        print("Assignment deleted.")
+        print("__________________")
+    else:
+        print("Invalid action.")
+
+    print("__________________")
+    print(f"Updated grades for {selected_category['name']}.")
+    Calculate_Final_Grade(Class)
+
+
+def Alter_Category(Class, category_index):
+    category = Class['categories'][category_index]
+    print(f"Editing category: {category['name']} (Weight: {category['weight']}%)")
+
+    print("1 Name")
+    print("2 Weight")
+    edit_field = input("Would you like to edit 1 or 2 (q to quit)").lower()
+    if edit_field == "1":
+        new_name = input("Enter the new name: ")
+        category['name'] = new_name
+        print("Category name updated.")
+    elif edit_field == "2":
+        new_weight = float(input("Enter the new weight: "))
+        category['weight'] = new_weight
+        print("Category weight updated.")
+    else:
+        print("Invalid input. No changes made.")
+    print("__________________")
+
+def Add_Grade(Class):
+    category_list = Class.get("categories", [])
+    if not category_list:
+        print("No categories found for this class. Please add categories first.")
+        return
+
+    print("Select the category to which you want to add a grade:")
+    print("__________________")
+    for idx, category in enumerate(category_list, 1):
+        print(f"{idx}. {category['name']} (Weight: {category['weight']}%)")
+
+    category_choice = int(input("Enter the number for the category: ")) - 1
+    selected_category = category_list[category_choice]
+
+    while True:
+        assignment_name = input("Enter the assignment name: ")
+        print("__________________")
+        assignment_grade = float(input(f"Enter the grade received for {assignment_name}: "))
+        print("__________________")
+        assignment_points = float(input(f"Enter how many points {assignment_name} is worth: "))
+        print("__________________")
+
+        assignment = {"name": assignment_name, "grade": assignment_grade, "points": assignment_points}
+        selected_category['assignments'].append(assignment)
+
+        cont = input("Do you want to add another grade? (y/n): ").lower()
+        if cont == 'n':
+            break
+
+    Calculate_Final_Grade(Class)
+    print(f"Grades for {Class['name']} updated.")
+    print("__________________")
+
+def Calculate_Final_Grade(Class):
+    total_weight = 0
+    weighted_sum = 0
+    for category in Class['categories']:
+        if category['assignments']:
+            total_category_grade = sum([a['grade'] for a in category['assignments']])
+            total_category_points = sum([a['points'] for a in category['assignments']])
+            if total_category_points > 0:
+                category_average = (total_category_grade / total_category_points) * 100
+                weighted_sum += category_average * (category['weight'] / 100)
+                total_weight += category['weight']
+
+    if total_weight == 100:
+        Class['grade'] = round(weighted_sum, 2)
+    else:
+        print("Error: Categories do not add up to 100%. Unable to calculate final grade.")
+        Class['grade'] = "Unknown"
+        print("__________________")
+
+def Open_Class():
+    a = 0
+    for i in Class_List:
+        a += 1
+        if i["grade"] == "Unknown" or i["grade"] == "No grade":
+            print("__________________")
+            print(str(a) + ". " + i["name"] + ": Unknown grade")
+            print("__________________")
+        else:
+            print("__________________")
+            print(str(a) + ". " + i["name"] + ": " + str(i["grade"]))
+            print("__________________")
+
+    answer = int(input("Which class do you want to edit (enter number): ")) - 1
+    print("__________________")
+    selected_class = Class_List[answer]
+
+    print("1 New category")
+    print("2 Alter Category")
+    print("3 Add grades")
+    print("4 Edit grades")
+    print("__________________")
+    action = int(input("Action: (1-4): "))
+    print("__________________")
+
+    if action == 1:
+        Add_Category(selected_class)
+    elif action == 2:
+        Alter_Category(selected_class)
+    elif action == 3:
+        Add_Grade(selected_class)
+    elif action == 4:
+        Edit_Grades(selected_class)
+    else:
+        print("Invalid choice.")
+
+def Add_Class():
+    print("__________________")
+    print_line()
+    Class = {"name": input("Enter Class Name: "), "grade": "No grade",
+             "categories": []}
+    Class_List.append(Class)
+    print("__________________")
+    print("Class has been added ")
+
+def print_line():
+    print("\n__________________")
+
+Pass = True
+
+while Pass:
+    print("__________________")
+    print("Grade Calculator ")
+    print("__________________")
+    print("1 Add Class")
+    print("2 Open existing class")
+    print("3 Quit")
+    print("__________________")
+    print_line()
+    Choice = (input("Enter Your Choice (1-3): "))
+
+    if Choice == '1':
+        Add_Class()
+    elif Choice == '2':
+        Open_Class()
+    elif Choice == '3':
+        Pass = False
+    else:
+        print("__________________")
+        print("Error, please pick a number 1-2 ")
+        print("__________________")
